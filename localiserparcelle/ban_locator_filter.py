@@ -1,12 +1,13 @@
-# Discovery Plugin
-#
-# Copyright (C) 2017 Lutra Consulting
-# info@lutraconsulting.co.uk
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
+"""Discovery Plugin.
+
+Copyright (C) 2017 Lutra Consulting
+info@lutraconsulting.co.uk
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+"""
 
 from qgis.core import (
     QgsCoordinateTransform,
@@ -27,18 +28,18 @@ class BanLocatorFilter(QgsLocatorFilter):
     def clone(self):
         return BanLocatorFilter(self.plugin)
 
-    def name(self):
+    def name(self) -> str:
         return "recherche adresse ban"
 
-    def displayName(self):
+    def displayName(self) -> str:
         return "Recherche adresse BAN"
 
-    def prefix(self):
+    def prefix(self) -> str:
         return "ban"
 
     def fetchResults(self, text, context, feedback):
 
-        if len(text) < 3:
+        if len(text.strip()) < 3:
             return
 
         adresse_ban_finder = AdresseBanFinder(search=text, codecity=None, parent=None)
@@ -52,9 +53,7 @@ class BanLocatorFilter(QgsLocatorFilter):
             res = QgsLocatorResult(self, adresse, (score, type_info, x, y))
             res.score = score
             QgsMessageLog.logMessage(
-                "adresse => {} score => {} type_info ==> {}".format(
-                    adresse, score, type_info
-                )
+                f"adresse => {adresse} score => {score} type_info ==> {type_info}",
             )
             res.group = type_info
             self.resultFetched.emit(res)
@@ -71,8 +70,8 @@ class BanLocatorFilter(QgsLocatorFilter):
         x, y = point[0], point[1]
         self.plugin.zoomTo(x, y, x, y)
 
-    def hasConfigWidget(self):
+    def hasConfigWidget(self) -> bool:
         return False
 
-    def openConfigWidget(self, parent):
+    def openConfigWidget(self, parent) -> None:
         pass

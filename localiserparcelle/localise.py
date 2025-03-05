@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from os.path import basename, dirname, exists, join
+from pathlib import Path
 
 from qgis.core import (
     QgsCoordinateReferenceSystem,
@@ -30,9 +30,10 @@ from qgis.utils import iface, pluginMetadata
 from .ban_locator_filter import BanLocatorFilter
 from .ui_control import ui_control
 
-cePlugin = basename(dirname(__file__))
+cePlugin = Path.name(Path.parent(__file__))
 PluginVersion = pluginMetadata(
-    cePlugin, "version"
+    cePlugin,
+    "version",
 )  ## Pour les changements, voir metadata.txt
 
 
@@ -42,13 +43,11 @@ class plugin(QObject):
         QObject.__init__(self)
         self.iface = iface
         # translation environment
-        self.plugin_dir = dirname(__file__)
+        self.plugin_dir = Path.parent(__file__)
         # locale = QSettings().value("locale/userLocale")[0:2]
         locale = "fr"
-        localePath = join(
-            self.plugin_dir, "i18n", "localiseparcelle_{0}.qm".format(locale)
-        )
-        if exists(localePath):
+        localePath = Path(self.plugin_dir) / "i18n" / f"localiseparcelle_{locale}.qm"
+        if Path.exists(localePath):
             self.translator = QTranslator()
             self.translator.load(localePath)
             QCoreApplication.installTranslator(self.translator)
@@ -62,7 +61,7 @@ class plugin(QObject):
         self.manager = QgsNetworkAccessManager.instance()
         self.tmpGeometry = []
         self.lstListes = []  # Les listes déroulantes de l'écran : region, dep, comm...
-        icon = join(dirname(__file__), "icone.png")
+        icon = Path.parent(__file__) / "icone.png"
         win = iface.mainWindow()
         self.pluginMenu = iface.pluginMenu().addMenu(
             QIcon(icon), "&Localiser Parcelle ou Adresse (Ban)"
@@ -78,8 +77,8 @@ class plugin(QObject):
         self.pluginMenu.addAction(self.action)
 
         self.actionAide = QAction(
-            QIcon(join(dirname(__file__), "help.png")),
-            "A propos du plugin (version %s)" % PluginVersion,
+            QIcon(Path.parent(__file__) / "help.png"),
+            f"A propos du plugin (version {PluginVersion})",
             win,
         )
         self.actionAide.triggered.connect(self.getAbout)
@@ -93,14 +92,14 @@ class plugin(QObject):
         self.marker = None
         ### Rétablir la dernière valeur du zoom et l'option de marqueur choisies par le user:
         s = QSettings()  # QGIS options settings
-        scale = s.value("%szoom" % self.settings, "100")
+        scale = s.value(f"{self.settings}zoom", "100")
         self.scaleZoom = int(scale)
-        self.marqueurDyna = s.value("%smarker" % self.settings, False, type=bool)
+        self.marqueurDyna = s.value(f"{self.settings}marker", False, type=bool)
 
     def unload(self):
         self.cleanMarker()
         self.pluginMenu.parentWidget().removeAction(
-            self.pluginMenu.menuAction()
+            self.pluginMenu.menuAction(),
         )  # Remove from Extension menu
         # self.iface.removePluginMenu("&Localiser Parcelle ou Adresse (Ban)",self.action)
         iface.removeToolBarIcon(self.action)
@@ -123,7 +122,7 @@ class plugin(QObject):
         )
         # Il faut positionner le dialog MANUELLEMENT, sinon Qt va le repositionner automatiquement à chaque hide -> show :
         self.dlg.setGeometry(
-            win.geometry().x() + 50, win.geometry().y() + 50, 200, 200
+            win.geometry().x() + 50, win.geometry().y() + 50, 200, 200,
         )  # """
 
         # fermeture de la fenetre du plugin on deroute sur une fonction interne
@@ -158,7 +157,7 @@ class plugin(QObject):
         self.dlg.scale.setValue(self.scaleZoom)  # init dans initGui
         self.dlg.scale.valueChanged.connect(self.setScale)
 
-        self.dlg.opacityMarker.setOpacity(float((self.color.alpha() / 255)))
+        self.dlg.opacityMarker.setOpacity(float(self.color.alpha() / 255))
         self.dlg.opacityMarker.opacityChanged.connect(self.setColor)
 
         self.dlg.show()
@@ -186,12 +185,12 @@ class plugin(QObject):
 
         self.cartelie = CartelieFinder(self.dlg)
 
-        self.getListAction(0, False)
+        self.getListAction(0, MAJ=False)
 
         ### Rétablir la dernière région et dernier département choisi par le user:
         s = QSettings()  # QGIS options settings
 
-        region = s.value("%sregion" % self.settings, "")
+        region = s.value(f"{self.settings}region", "")
         if region == "":
             return
         region = int(region)
@@ -200,7 +199,7 @@ class plugin(QObject):
         self.dlg.lRegion.setCurrentIndex(region)
 
         dep = s.value(
-            "%sdepartement" % self.settings, ""
+            f"{self.settings}departement", "",
         )  # Il faut le faire avant getListDepartements()
         self.getListDepartements()
         if dep == "":
@@ -220,7 +219,7 @@ class plugin(QObject):
 
     def cleanMarker(self):
         # detruire les precedents marqueurs
-        for i in range(0, len(self.tmpGeometry)):
+        for i in range(len(self.tmpGeometry)):
             self.iface.mapCanvas().scene().removeItem(self.tmpGeometry[i])
         self.marker = None
         self.tempGeometry = []
@@ -230,20 +229,20 @@ class plugin(QObject):
         # self.cleanMarker();
 
     def getListDepartements(self, index=0):
-        self.getListAction(1, False)
+        self.getListAction(1, MAJ=False)
 
     def getListCommunes(self, index=0):
         self.dlg.lCommune.blockSignals(True)
         # self.dlg.lCommune.activated[int].disconnect(self.getListSections) #Eviter req commune
         # self.dlg.lCommune.editTextChanged.disconnect(self.getListSectionsByText)
-        self.getListAction(2, False)
+        self.getListAction(2, MAJ=False)
         # self.dlg.lCommune.activated[int].connect(self.getListSections)
         # self.dlg.lCommune.editTextChanged.connect(self.getListSectionsByText)
         self.dlg.lCommune.blockSignals(False)
 
-    def getListSectionsByText(self, text):
+    def getListSectionsByText(self, text: str):
         text = self.dlg.lCommune.currentText()
-        index = self.dlg.lCommune.findText("%s" % (text))
+        index = self.dlg.lCommune.findText(text)
         try:
             if index > -1 and index < (self.dlg.lCommune.maxIndex - 1):
                 self.dlg.lCommune.setCurrentIndex(index)
@@ -259,22 +258,22 @@ class plugin(QObject):
         self.getListAction(4)
         self.dlg.lParcelle.blockSignals(False)
 
-    def findParcelleByText(self, text):
+    def findParcelleByText(self, text: str):
         # text = self.dlg.lParcelle.currentText()
         # text = text.lstrip("0") #if len(text)>1 :
         if text == "":
             self.dlg.lParcelle.lineEdit().setStyleSheet(
-                "QLineEdit{background-color:#ffffff;}"
+                "QLineEdit{background-color:#ffffff;}",
             )
             return
         index = self.dlg.lParcelle.findText(text)  # , Qt.MatchContains )
         if index < 0 or index > self.dlg.lParcelle.maxIndex - 1:
             self.dlg.lParcelle.lineEdit().setStyleSheet(
-                "QLineEdit{background-color:#ff9999}"
+                "QLineEdit{background-color:#ff9999}",
             )
             return
         self.dlg.lParcelle.lineEdit().setStyleSheet(
-            "QLineEdit{background-color:#ffffff;}"
+            "QLineEdit{background-color:#ffffff;}",
         )
         try:
             self.dlg.lParcelle.setCurrentIndex(index)
@@ -302,10 +301,10 @@ class plugin(QObject):
         #############################################
         s = QSettings()
         networkTimeout = s.value(
-            "Qgis/networkAndProxy/networkTimeout", "60000"
+            "Qgis/networkAndProxy/networkTimeout", "60000",
         )  # Sauver le param Timeout
         s.setValue(
-            "Qgis/networkAndProxy/networkTimeout", "20000"
+            "Qgis/networkAndProxy/networkTimeout", "20000",
         )  #  Imposer un délai de 20 secondes
 
         if indexListe > 0:
@@ -318,7 +317,7 @@ class plugin(QObject):
             result = self.cartelie.appel(indexListe, forcerMAJ=MAJ)
 
         s.setValue(
-            "Qgis/networkAndProxy/networkTimeout", networkTimeout
+            "Qgis/networkAndProxy/networkTimeout", networkTimeout,
         )  # Retablir le parametre d'origine
 
         if not result:
@@ -327,9 +326,11 @@ class plugin(QObject):
                 self.dlg,
                 "Erreur réseau",
                 "Serveurs de localisation (Géoref et Cartélie) injoignables :"
-                + "\n 1. Ces serveurs centraux sont peut-être hors-service."
-                + "\n 2. Ou bien il y a un problème sur votre réseau ou celui du ministère.\n\n"
-                + "Vous pouvez aussi vérifier vos paramètres réseau:\n   Préférences > Options > Réseau > Proxy",
+                "\n 1. Ces serveurs centraux sont peut-être hors-service."
+                "\n 2. Ou bien il y a un problème sur votre réseau"
+                " ou celui du ministère.\n\n"
+                "Vous pouvez aussi vérifier vos paramètres réseau:"
+                "\n   Préférences > Options > Réseau > Proxy",
             )
             return
 
@@ -340,17 +341,17 @@ class plugin(QObject):
         n = len(result)
         for i in range(n):
             if indexListe == 1:
-                libelle = "%s (%s)" % (result[i]["nom"], result[i]["code"])
+                libelle = f'{result[i]["nom"]} ({result[i]["code"]})'
             elif indexListe == 2:
-                libelle = "%s - %s" % (result[i]["code"], result[i]["nom"])
+                libelle = f'{result[i]["code"]} - {result[i]["nom"]}'
             else:
                 libelle = result[i]["nom"].lstrip("0")
             # elif indexListe==4:	libelle = result[i]["nom"].lstrip("0")
             # else: libelle = result[i]["nom"]
             """if indexListe == 2 :
-				libelle = "%s - %s" % (result[i]["code"], result[i]["nom"])
-			else :
-				libelle = "%s (%s)" % (result[i]["nom"], result[i]["code"]) if indexListe == 1 else result[i]["nom"] #"""
+                libelle = "%s - %s" % (result[i]["code"], result[i]["nom"])
+            else :
+                libelle = "%s (%s)" % (result[i]["nom"], result[i]["code"]) if indexListe == 1 else result[i]["nom"] #"""
             self.lstListes[indexListe].addItem(libelle)
         try:
             self.lstListes[indexListe].getMaxIndex()
@@ -364,11 +365,11 @@ class plugin(QObject):
             self.dlg.commune_adresse_disable("")
         elif indexListe == 1:  # Enregistre le choix de la région
             self.dlg.commune_adresse_disable("")
-            s.setValue("%sregion" % self.settings, index)
-            s.setValue("%sdepartement" % self.settings, "")
+            s.setValue(f"{self.settings}region", index)
+            s.setValue(f"{self.settings}departement", "")
         elif indexListe == 2:  # enregistre le choix du dép.
             self.dlg.commune_adresse_disable("")
-            s.setValue("%sdepartement" % self.settings, index)
+            s.setValue(f"{self.settings}departement", index)
         elif indexListe == 3:
             self.dlg.commune_adresse_enable(self.dlg.lCommune.currentText())
         # FIN de : Enregistrer parametres de recherche
@@ -390,14 +391,17 @@ class plugin(QObject):
 
         if not result:
             self.dlg.affiche_adresse(
-                "<html><body><p align=left color=red><b>Adresse non trouvée</p></b></body></html>"
+                "<html><body><p align=left color=red><b>"
+                "Adresse non trouvée"
+                "</p></b></body></html>",
             )
             return
 
         adresse, score, typeInfo, x, y = result
         self.dlg.affiche_adresse(
-            "<html><body><p align=left>Trouvé (%s):<br>%s<br>correspondance=%s &#37;</p></body></html>"
-            % (typeInfo, adresse, score)
+            "<html><body><p align=left>"
+            f"Trouvé ({typeInfo}):<br>{adresse}<br>correspondance={score} &#37;"
+            "</p></body></html>",
         )
         # Transformer les coordonnees du 4326 du Gécodeur Etalab -> Systeme projection projet
         # recuperation CRS projet
@@ -420,7 +424,7 @@ class plugin(QObject):
                 # RECUPERATION DE L'ID DE LA LISTE
                 indexListe = i
                 break
-        if indexListe == None:
+        if indexListe is None:
             QMessageBox.information(
                 self.iface.mainWindow(),
                 "Zoom impossible",
@@ -468,7 +472,7 @@ class plugin(QObject):
     def setMarker(self):
         self.marqueurDyna = self.dlg.dynaMarker.isChecked()
         QSettings().setValue(
-            "%smarker" % self.settings, self.marqueurDyna
+            f"{self.settings}marker", self.marqueurDyna,
         )  # Memoriser le parametre "marqueurDyna"
         if self.marker:
             mc = self.iface.mapCanvas()
@@ -488,13 +492,13 @@ class plugin(QObject):
             self.color.setRgb(self.dlg.colorMarker.color().rgb())
         elif self.dlg.sender() == self.dlg.opacityMarker:
             self.color.setAlpha(alpha)
-        if self.marker and type(self.marker) != dynaLocationMarker:
+        if self.marker and not isinstance(self.marker, dynaLocationMarker):
             self.marker.setColor(self.color)
 
     def setScale(self):
         self.scaleZoom = self.dlg.scale.value()
         QSettings().setValue(
-            "%szoom" % self.settings, self.scaleZoom
+            f"{self.settings}zoom", self.scaleZoom,
         )  # Memoriser le parametre "Zoom"
 
         if self.marker:
@@ -508,7 +512,7 @@ class plugin(QObject):
                     scale = (
                         0  # pas des metres donc on ne peut pas utiliser ce parametre.
                     )
-            except Exception as e:
+            except Exception:
                 scale = 0
             rect = QgsRectangle(x - scale, y - scale, x + scale, y + scale)
             mc.setExtent(rect)
@@ -524,7 +528,7 @@ class plugin(QObject):
                 scale = self.scaleZoom  # si unités en metres
             else:
                 scale = 0  # pas des metres donc on ne peut pas utiliser ce parametre.
-        except Exception as e:
+        except Exception:
             scale = 0
         rect = QgsRectangle(x - scale, y - scale, x1 + scale, y1 + scale)
         mc.setExtent(rect)
@@ -535,7 +539,7 @@ class plugin(QObject):
             dynaLocationMarker(mc, rect.center().x(), rect.center().y(), self.color)
             if self.marqueurDyna
             else basicLocationMarker(
-                mc, rect.center().x(), rect.center().y(), self.color
+                mc, rect.center().x(), rect.center().y(), self.color,
             )
         )
         # self.marker = dynaLocationMarker(mc, rect.center().x(), rect.center().y(), self.color) if self.dlg.dynaMarker.isChecked() else basicLocationMarker(mc, rect.center().x(), rect.center().y(), self.color)
@@ -543,25 +547,31 @@ class plugin(QObject):
         mc.refresh()
 
     def updateCodecity(self, idx):
-        """met à jour le citycode pour filtrer la requete par code insee"""
+        """Mets à jour le citycode pour filtrer la requete par code insee."""
         c = self.results[2][idx]["code"]  # c = self.results[2][idx-1]["code"]
         self.dlg.adrin.set_codecity(c)
 
     def getAbout(self):
-        icon = join(dirname(__file__), "icone.png")
-        html = "Ce plugin exploite (par le protocole <b>HTTP</b>):<br>"
-        html += "<ol><li>le service Web du Ministère de la Transition Ecologique et Solidaire de géolocalisation avec plusieurs échelles administratives (Région, Département, Commune, Section, Parcelle) ;</li>"
-        html += "<li>le service web de géolocalisation à l'adresse Etalab.gouv.fr-BAN.</li></ol>"
-        html += "Ces deux web services fonctionnent depuis des postes de travail ayant un accès internet, en utilisant la configuration réseau de qgis pour le protocole HTTP et le système de projection courant du projet pour toute transformation des coordonnées.<br><br>"
-        html += "<img src='{}'> Version {}".format(
-            icon.replace("\\", "/"), PluginVersion
+        icon = Path.parent(__file__) / "icone.png"
+        html = (
+            "Ce plugin exploite (par le protocole <b>HTTP</b>):<br>"
+            "<ol><li>le service Web du Ministère de la Transition Ecologique et Solidaire"
+            " de géolocalisation avec plusieurs échelles administratives"
+            " (Région, Département, Commune, Section, Parcelle) ;</li>"
+            "<li>le service web de géolocalisation à l'adresse"
+            " Etalab.gouv.fr-BAN.</li></ol>"
+            "Ces deux web services fonctionnent depuis des postes de travail ayant"
+            " un accès internet, en utilisant la configuration réseau de qgis"
+            " pour le protocole HTTP et le système de projection courant du projet"
+            " pour toute transformation des coordonnées.<br><br>"
+            f'<img src=\'{icon.replace("\\", "/")}\'> Version {PluginVersion}'
         )
-        QMessageBox.information(self.dlg, "A propos", "%s" % html)
+        QMessageBox.information(self.dlg, "A propos", html)
 
 
 class basicLocationMarker(QgsVertexMarker):
     def __init__(self, canvas, x, y, color):
-        super(basicLocationMarker, self).__init__(canvas)
+        super().__init__(canvas)
         self.canvas = canvas
         self.color = color
         self.map_pos = QgsPointXY(x, y)
@@ -573,9 +583,10 @@ class basicLocationMarker(QgsVertexMarker):
 
 
 class dynaLocationMarker(QgsMapCanvasItem):
+
     class aniObject(QObject):
         def __init__(self):
-            super(dynaLocationMarker.aniObject, self).__init__()
+            super().__init__()
             self._size = 0
             self.startsize = 0
             self.maxsize = 32
@@ -592,7 +603,7 @@ class dynaLocationMarker(QgsMapCanvasItem):
         self.canvas = canvas
         self.color = color
         self.map_pos = QgsPointXY(x, y)
-        self.aniObject = dynaLocationMarker.aniObject()
+        self.aniObject = self.aniObject()
         QgsMapCanvasItem.__init__(self, canvas)
         self.anim = QPropertyAnimation(self.aniObject, b"size")
         self.anim.setDuration(1000)
@@ -627,8 +638,8 @@ class dynaLocationMarker(QgsMapCanvasItem):
 
     def boundingRect(self):
         return QRectF(
-            -self.halfsize * 2.0,
-            -self.halfsize * 2.0,
+            self.halfsize * -2.0,
+            self.halfsize * -2.0,
             2.0 * self.maxsize,
             2.0 * self.maxsize,
         )

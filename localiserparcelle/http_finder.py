@@ -1,32 +1,35 @@
-# -----------------------------------------------------------
-# Mostly from
-# QGIS Quick Finder Plugin
-# Copyright (C) 2014 Denis Rouzaud, Arnaud Morvan
-#               2018 JDL
-#
-# -----------------------------------------------------------
-#
-# licensed under the terms of GNU GPL 2
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License along
-# with this program; if not, write to the Free Software Foundation, Inc.,
-# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-#
-# ---------------------------------------------------------------------
+"""HttpFinder class and subclasses.
+
+Mostly from
+QGIS Quick Finder Plugin
+Copyright (C) 2014 Denis Rouzaud, Arnaud Morvan
+              2018 JDL
+
+-----------------------------------------------------------
+
+licensed under the terms of GNU GPL 2
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along
+with this program; if not, write to the Free Software Foundation, Inc.,
+51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+
+---------------------------------------------------------------------
+"""
 
 import codecs
 import json
 import os
+from pathlib import Path
 
 from PyQt5.QtCore import (
     QDir,
@@ -40,9 +43,8 @@ from PyQt5.QtCore import (
     pyqtSlot,
 )
 from PyQt5.QtNetwork import QNetworkReply, QNetworkRequest
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QWidget
 from qgis.core import Qgis, QgsLogger, QgsMessageLog, QgsNetworkAccessManager
-from qgis.utils import iface
 
 
 class HttpFinder(QObject):
@@ -50,8 +52,8 @@ class HttpFinder(QObject):
     finished = pyqtSignal(QObject)
     message = pyqtSignal(str, Qgis.MessageLevel)
 
-    def __init__(self, parent):
-        QObject.__init__(self, parent)
+    def __init__(self, parent: QWidget = None):
+        super().__init__(self, parent)
         self.asynchonous = False
         self.reply = None
         self.data = None
@@ -127,13 +129,18 @@ class HttpFinder(QObject):
         self.reply = None
 
     def tr(self, sourceText):
-        """surchage de tr à cause du bug avec PyQt5
+        """Surchage de tr à cause du bug avec PyQt5
         http://pyqt.sourceforge.net/Docs/PyQt5/i18n.html"""
         return QApplication.translate("HttpFinder", sourceText, None)
 
     @pyqtSlot(str, Qgis.MessageLevel)
     def display_message(self, message, level):
-        iface.messageBar().pushMessage("Localiser parcelle adresse", message, level)
+        QgsMessageLog.logMessage(
+            message,
+            "LocaliserParcelleAdresse",
+            level,
+            notifyUser=True,
+        )
 
     def get_error_message(self, error):
         if error == QNetworkReply.NoError:
@@ -271,9 +278,17 @@ class HttpFinder(QObject):
 
 
 class AdresseBanFinder(HttpFinder):
-    def __init__(self, search, limit="10", codecity=None, parent=None):
-        HttpFinder.__init__(self, parent)
-        self.URL = "https://api-adresse.data.gouv.fr/search/"
+
+    URL = "https://api-adresse.data.gouv.fr/search/"
+
+    def __init__(
+        self,
+        search,
+        limit: str = "10",
+        codecity=None,
+        parent: QWidget = None,
+    ):
+        super().__init__(self, parent)
         self.search = search
         self.limit = limit
         self.params = {"q": self.search, "limit": self.limit}
@@ -311,10 +326,14 @@ class AdresseBanFinder(HttpFinder):
 
 
 class CartelieFinder(HttpFinder):
-    def __init__(self, parent=None):  # , indexListe, code=None, parent=None):
-        HttpFinder.__init__(self, parent)
-        self.URL = "https://georef.application.developpement-durable.gouv.fr/geoservices/api/v1/localize?"
-        self.URL2 = "http://cartelie.application.developpement-durable.gouv.fr/cartelie/localize?"
+
+    URL = "https://georef.application.developpement-durable.gouv.fr/geoservices/api/v1/localize?"
+    URL2 = (
+        "http://cartelie.application.developpement-durable.gouv.fr/cartelie/localize?"
+    )
+
+    def __init__(self, parent: QWidget = None):  # , indexListe, code=None, parent=None)
+        super().__init__(self, parent)
         self.params = {"niveauBase": "0", "niveau": "0", "projection": "EPSG_2154"}
 
         ## Dossier où enregistrer les datas web en cache pour limiter les requetes
@@ -322,16 +341,17 @@ class CartelieFinder(HttpFinder):
         self.cheminCache = None
         iniFic = QSettings().fileName()
         if QFile.exists(iniFic):  # Si la config QGIS est stockee dans QGIS/QGIS3.ini
-            iniDir = os.path.dirname(iniFic)
-            if QDir(iniDir + os.sep + dossierCache).exists() or QDir(iniDir).mkdir(
-                dossierCache
+            iniDir = Path.parent(iniFic)
+            if QDir(f"{iniDir}{os.sep}{dossierCache}").exists() or QDir(iniDir).mkdir(
+                dossierCache,
             ):
-                self.cheminCache = os.path.abspath(iniDir + os.sep + dossierCache)
+                self.cheminCache = Path.resolve(f"{iniDir}{os.sep}{dossierCache}")
 
     def appel(
         self, indexListe, code=None, parent=None, forcerMAJ=False
     ):  ## Interroger API ou cache
-        """Interroger API (url+param) ou bien 1 fichier cache "nomCache.json"
+        """Interroger API (url+param) ou bien 1 fichier cache "nomCache.json".
+
         Si nomCache est défini :
          # On cherche le fichier: self.cheminCache +os.sep +nomCache +'.json'
          # S'il existe on le lit (pas de requête http)
@@ -348,14 +368,13 @@ class CartelieFinder(HttpFinder):
                 nomCache = "departements" + str(code)
             else:
                 nomCache = "communes" + str(code)
-            ficCache = self.cheminCache + os.sep + nomCache + ".json"
-            if not forcerMAJ and QFile.exists(
-                ficCache
-            ):  # Lire fichier nomCache sauf si c'est une MAJ
-                with codecs.open(ficCache, "r", "utf-8", "ignore") as F:
-                    self.data = F.read()
+            ficCache = f"{self.cheminCache}{os.sep}{nomCache}.json"
+            # Lire fichier nomCache sauf si c'est une MAJ
+            if not forcerMAJ and QFile.exists(ficCache):
+                with codecs.open(ficCache, "r", "utf-8", "ignore") as f:
+                    self.data = f.read()
                 if self.data:
-                    # print('# Liste "'+nomCache+'" lue depuis: ' +ficCache )
+                    # print(f'# Liste "{nomCache}" lue depuis: {ficCache}')
                     return json.loads(self.data)
         else:
             ficCache = False
@@ -370,24 +389,33 @@ class CartelieFinder(HttpFinder):
         self.send_request(self.URL, self.params)
 
         if not self.data or self.data == []:
-            print(
-                "Erreur réseau : ", self.URL, self.erreurs
-            )  # self.log("Erreur réseau: "+ self.erreurs, 'erreur')
+            QgsMessageLog.logMessage(
+                f"Erreur réseau : {self.URL} {self.erreurs}",
+                "LocaliserParcelleAdresse",
+                Qgis.Warning,
+                notifyUser=True,
+            )
+            # self.log("Erreur réseau: "+ self.erreurs, 'erreur')
             # self.erreurs += "Erreur réseau: {}\n {} \n {}".format(self.erreurs,self.URL,str(self.params))
             # self.messageBar.pushMessage('Erreur réseau', 'URL injoignable : '+self.URL, Qgis.Warning, 10)
             ## Tester avec la 2è URL (serveur cartelie) :
-            print("Tester la requete avec URL2 :", self.URL2)
+            QgsMessageLog.logMessage(
+                f"Tester la requete avec URL2 : {self.URL2}",
+                "LocaliserParcelleAdresse",
+                Qgis.Info,
+                notifyUser=False,
+            )
             self.send_request(self.URL2, self.params)
             if not self.data or self.data == []:
                 return False
         # if self.data==[]:
-        # 	print("Aucune donnée reçue : ", self.URL, self.params)
-        # 	#self.messageBar.pushMessage('Aucune donnée reçue', 'URL : '+self.URL, Qgis.Warning, 5)
-        # 	return False
+        #    print("Aucune donnée reçue : ", self.URL, self.params)
+        #    #self.messageBar.pushMessage('Aucune donnée reçue', 'URL : '+self.URL, Qgis.Warning, 5)
+        #    return False
 
         if ficCache:  ## Si chemin ficCache défini, sauvegarder self.data en cache:
-            with codecs.open(ficCache, "w", "utf-8", "ignore") as F:
-                F.write(self.dataText)
+            with codecs.open(ficCache, "w", "utf-8", "ignore") as f:
+                f.write(self.dataText)
 
         return self.data
 

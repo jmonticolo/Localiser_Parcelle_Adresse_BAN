@@ -1,7 +1,7 @@
 import time
-from os.path import dirname, join
+from pathlib import Path
 
-from qgis.core import *
+from qgis.core import QgsApplication
 from qgis.gui import (
     QgsBusyIndicatorDialog,
     QgsCollapsibleGroupBox,
@@ -18,7 +18,24 @@ from qgis.PyQt.QtCore import (
     QTimer,
 )
 from qgis.PyQt.QtGui import QIcon
-from qgis.PyQt.QtWidgets import *
+from qgis.PyQt.QtWidgets import (
+    QApplication,
+    QCheckBox,
+    QComboBox,
+    QCompleter,
+    QFrame,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLayout,
+    QPushButton,
+    QSizePolicy,
+    QSpinBox,
+    QTabWidget,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .http_finder import AdresseBanFinder
 
@@ -34,11 +51,11 @@ except AttributeError:
         return QApplication.translate(context, text, disambig)
 
 
-class Ui_Dialog(object):
+class Ui_Dialog:
     def setupUi(self):
         self.setObjectName("Dialog")
         self.resize(380, 380)
-        icon = join(dirname(__file__), "icone.png")
+        icon = Path.parent(__file__) / "icone.png"
         self.setWindowIcon(QIcon(icon))
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -67,9 +84,10 @@ class Ui_Dialog(object):
         self.lRegion.setInsertPolicy(QComboBox.NoInsert)
         self.lRegion.lineEdit().setPlaceholderText("Choisir la région")
         self.gridLayout_2.addWidget(self.lRegion, 0, 1, 1, 3)
-        #
+        # --
         self.bMajReg = QPushButton(
-            QgsApplication.getThemeIcon("/mActionRefresh.svg"), ""
+            QgsApplication.getThemeIcon("/mActionRefresh.svg"),
+            "",
         )  # 'Rafraichir')
         self.bMajReg.setToolTip("Mettre à jour la liste des régions")
         self.bMajReg.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -82,7 +100,7 @@ class Ui_Dialog(object):
         self.lDepartement.setInsertPolicy(QComboBox.NoInsert)
         self.lDepartement.lineEdit().setPlaceholderText("Choisir le département")
         self.gridLayout_2.addWidget(self.lDepartement, 1, 1, 1, 3)
-        #
+        # --
         self.bMajDep = QPushButton(
             QgsApplication.getThemeIcon("/mActionRefresh.svg"), ""
         )
@@ -93,16 +111,18 @@ class Ui_Dialog(object):
         self.lCommune = filteredComboBox(self.GroupBox)
         self.lCommune.setObjectName("lCommune")
         self.lCommune.setToolTip(
-            "Choisir la commune dans la liste ou saisir son code INSEE ou les premiers caractères de son nom"
+            "Choisir la commune dans la liste ou saisir son code INSEE"
+            " ou les premiers caractères de son nom",
         )
         # self.lCommune.setSizeAdjustPolicy( QComboBox.AdjustToContentsOnFirstShow )
         self.lCommune.setEditable(True)
         self.lCommune.setInsertPolicy(QComboBox.NoInsert)
         self.lCommune.lineEdit().setPlaceholderText("Choisir la commune")
         self.gridLayout_2.addWidget(self.lCommune, 2, 1, 1, 3)
-        #
+        # --
         self.bMajCom = QPushButton(
-            QgsApplication.getThemeIcon("/mActionRefresh.svg"), ""
+            QgsApplication.getThemeIcon("/mActionRefresh.svg"),
+            "",
         )
         self.bMajCom.setToolTip("Mettre à jour la liste des communes")
         self.bMajCom.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -140,7 +160,7 @@ class Ui_Dialog(object):
         self.lParcelle.setObjectName("lParcelle")
         # self.lParcelle.addItem("")
 
-        icon = join(dirname(__file__), "parcelle.png")
+        icon = Path.parent(__file__) / "parcelle.png"
         self.infracommune.addTab(self.parcelle, QIcon(icon), "")
         self.adresse = QWidget()
         self.adresse.setMinimumSize(QSize(294, 0))
@@ -162,7 +182,7 @@ class Ui_Dialog(object):
         self.adrout.setText("")
         self.adrout.setObjectName("adrout")
 
-        icon = join(dirname(__file__), "adresse.png")
+        icon = Path.parent(__file__) / "adresse.png"
         self.infracommune.addTab(self.adresse, QIcon(icon), "")
         self.gridLayout_2.addWidget(self.infracommune, 3, 1, 1, 4)
 
@@ -170,21 +190,23 @@ class Ui_Dialog(object):
         self.horizontalLayout.setSpacing(7)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.gridLayout_2.addLayout(self.horizontalLayout, 4, 1, 1, 4)
-        #
+        # --
         self.bZoom = QPushButton(self.GroupBox)
         self.bZoom.setDefault(True)
         self.bZoom.setObjectName("bZoom")
         self.bZoom.setStyleSheet("QPushButton { padding:3px 50px; font-weight:bold; }")
         # self.bZoom.setStyleSheet("QPushButton { padding:2px 60px; background-color:#00eeee; border:1px solid #888; border-radius:3px; border-style:outset; font-size:12pt; font-weight:bold; color:#090909; }")
         self.horizontalLayout.addWidget(self.bZoom)
-        #
+        # --
         self.bErase = QPushButton(self.GroupBox)
         self.bErase.setAutoDefault(False)
         self.bErase.setObjectName("bErase")
         self.horizontalLayout.addWidget(self.bErase)
-        #
+        # --
         self.busyIndicator = QgsBusyIndicatorDialog(
-            "", self, fl=Qt.WindowFlags()
+            "",
+            self,
+            fl=Qt.WindowFlags(),
         )  # Widget)
         self.busyIndicator.setVisible(False)
         self.busyIndicator.setMinimumSize(50, 10)
@@ -296,8 +318,8 @@ class Ui_Dialog(object):
     def retranslateUi(self):
         self.setWindowTitle(
             _translate(
-                "Dialog", "Localiser une commune, une parcelle ou une adresse", None
-            )
+                "Dialog", "Localiser une commune, une parcelle ou une adresse", None,
+            ),
         )
         self.bInfo.setText(_translate("Dialog", "à propos", None))
         self.lCommune.setItemText(0, _translate("Dialog", "-- COMMUNE --", None))
@@ -320,21 +342,21 @@ class Ui_Dialog(object):
         self.bErase.setText(_translate("Dialog", "Effacer le marqueur", None))
         self.bQuit.setText(_translate("Dialog", "Fermer", None))
         self.optionGroupBox.setTitle(
-            "%s :" % _translate("Dialog", "Options du marqueur", None)
+            f"{_translate("Dialog", "Options du marqueur", None)} :",
         )
         self.lblScale.setText(
-            "%s :" % _translate("Dialog", "Zoom élément trouvé  (m)", None)
+            f"{_translate("Dialog", "Zoom élément trouvé  (m)", None)} :",
         )
         self.lblColorOpacity.setText(
-            "%s :" % _translate("Dialog", "Couleur et opacité", None)
+            f"{_translate("Dialog", "Couleur et opacité", None)} :",
         )
         self.dynaMarker.setText(_translate("Dialog", "Marqueur animé", None))
 
 
 class filteredComboBox(QComboBox):
 
-    def __init__(self, parent=None):
-        super(filteredComboBox, self).__init__(parent)
+    def __init__(self, parent: QWidget = None):
+        super().__init__(parent)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setEditable(True)
 
@@ -346,45 +368,45 @@ class filteredComboBox(QComboBox):
         self.completer.setCompletionMode(QCompleter.UnfilteredPopupCompletion)
         self.setCompleter(self.completer)
 
-        def filter(text):
-            self.pFilterModel.setFilterFixedString("%s" % (text))
+        def filter(text: str):
+            self.pFilterModel.setFilterFixedString(text)
 
         def keyPress():
             if self.count() > self.maxIndex:
                 self.removeItem(self.count() - 1)
                 self.setCurrentIndex(0)
 
-        self.lineEdit().textEdited[unicode].connect(filter)
+        self.lineEdit().textEdited.connect(filter)
         self.lineEdit().returnPressed.connect(keyPress)
         self.completer.activated.connect(self.on_completer_activated)
 
     def getMaxIndex(self):
         self.maxIndex = self.count()
 
-    def on_completer_activated(self, text):
+    def on_completer_activated(self, text: str):
         if text:
-            index = self.findText("%s" % (text))
+            index = self.findText(text)
             self.setCurrentIndex(index)
             # fix bug
             self.activated[int].emit(index)
 
     def setModel(self, model):
-        super(filteredComboBox, self).setModel(model)
+        super().setModel(model)
         self.pFilterModel.setSourceModel(model)
         self.completer.setModel(self.pFilterModel)
 
     def setModelColumn(self, column):
         self.completer.setCompletionColumn(column)
         self.pFilterModel.setFilterKeyColumn(column)
-        super(filteredComboBox, self).setModelColumn(column)
+        super().setModelColumn(column)
 
 
 class AutocompleteBanLineEdit(QgsFilterLineEdit):
-    """mosty from discovery plugin"""
+    """mosty from discovery plugin."""
 
-    def __init__(self, parent=None):
+    def __init__(self, parent: QWidget = None):
         # Variables pour faciliter la gestion des requêtes
-        super(AutocompleteBanLineEdit, self).__init__(parent)
+        super().__init__(parent)
         self.timer = QTimer()
         self.line_edit_timer = QTimer()
         self.line_edit_timer.setSingleShot(True)
@@ -428,12 +450,13 @@ class AutocompleteBanLineEdit(QgsFilterLineEdit):
         model = self.completer.model()
         model.setStringList([])
 
-    def on_search_text_changed(self, new_search_text):
+    def on_search_text_changed(self, new_search_text: str):
 
         self.query_text = new_search_text
 
-        if len(new_search_text) < 3:
-            # Suppression de l'ensemble des suggestion si l'utilisateur supprime sa recherche
+        if len(new_search_text.strip()) < 3:
+            # Suppression de l'ensemble des suggestion
+            # si l'utilisateur supprime sa recherche
             self.clear_suggestions()
             return
         self.schedule_search(self.query_text)
@@ -457,7 +480,7 @@ class AutocompleteBanLineEdit(QgsFilterLineEdit):
         model.setStringList(suggestions)
         self.completer.complete()
 
-    def schedule_search(self, query_text):
+    def schedule_search(self, query_text: str):
         # Mise à jour de la recherche à lancer et du temps pour que la requête s'exécute
         self.query_text = query_text
         self.next_query_time = time.time() + self.search_delay
@@ -482,5 +505,5 @@ class AutocompleteBanLineEdit(QgsFilterLineEdit):
         self.setText(self.query_text)
 
     def get_search_result(self):
-        """renvoie le résultat de la requête"""
+        """Renvoie le résultat de la requête."""
         return self.search_result

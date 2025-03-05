@@ -1,12 +1,12 @@
 from qgis.PyQt.QtCore import QSettings, Qt
-from qgis.PyQt.QtWidgets import QApplication, QDialog
+from qgis.PyQt.QtWidgets import QApplication, QDialog, QWidget
 
 from .ui_localise import Ui_Dialog
 
 
 class ui_control(QDialog, Ui_Dialog):
-    def __init__(self, parent, fl):
-        QDialog.__init__(self, parent, fl)
+    def __init__(self, parent: QWidget, fl):
+        super().__init__(self, parent, fl)
         self.setupUi()
 
     def commune_adresse_disable(self, output):
@@ -26,8 +26,8 @@ class ui_control(QDialog, Ui_Dialog):
     def efface_adresse(self, output):
         self.adrout.clear()
 
-    def set_dialog_busy(self, dialogShouldBeBusy=True):
-        """fonction qui rend l'interface occupée et l'indique à l'utilisateur"""
+    def set_dialog_busy(self, dialogShouldBeBusy: bool = True):
+        """Fonction qui rend l'interface occupée et l'indique à l'utilisateur."""
         # s = QSettings()
         # networkTimeout = s.value( "Qgis/networkAndProxy/networkTimeout", "60000" ) # Par defaut, c'est 60000
         if dialogShouldBeBusy:
