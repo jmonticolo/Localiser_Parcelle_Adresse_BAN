@@ -61,7 +61,7 @@ class plugin(QObject):
         self.manager = QgsNetworkAccessManager.instance()
         self.tmpGeometry = []
         self.lstListes = []  # Les listes déroulantes de l'écran : region, dep, comm...
-        icon = Path.parent(__file__) / "icone.png"
+        icon = Path.parent(__file__) / "icons" / "icone.png"
         win = iface.mainWindow()
         self.pluginMenu = iface.pluginMenu().addMenu(
             QIcon(icon), "&Localiser Parcelle ou Adresse (Ban)"
@@ -77,7 +77,7 @@ class plugin(QObject):
         self.pluginMenu.addAction(self.action)
 
         self.actionAide = QAction(
-            QIcon(Path.parent(__file__) / "help.png"),
+            QIcon(Path.parent(__file__) / "icons" / "help.png"),
             f"A propos du plugin (version {PluginVersion})",
             win,
         )
@@ -552,7 +552,7 @@ class plugin(QObject):
         self.dlg.adrin.set_codecity(c)
 
     def getAbout(self):
-        icon = Path.parent(__file__) / "icone.png"
+        icon = Path.parent(__file__) / "icons" / "icone.png"
         html = (
             "Ce plugin exploite (par le protocole <b>HTTP</b>):<br>"
             "<ol><li>le service Web du Ministère de la Transition Ecologique et Solidaire"

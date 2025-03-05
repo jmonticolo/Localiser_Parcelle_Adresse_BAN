@@ -55,7 +55,7 @@ class Ui_Dialog:
     def setupUi(self):
         self.setObjectName("Dialog")
         self.resize(380, 380)
-        icon = Path.parent(__file__) / "icone.png"
+        icon = Path.parent(__file__) / "icons" / "icone.png"
         self.setWindowIcon(QIcon(icon))
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -160,7 +160,7 @@ class Ui_Dialog:
         self.lParcelle.setObjectName("lParcelle")
         # self.lParcelle.addItem("")
 
-        icon = Path.parent(__file__) / "parcelle.png"
+        icon = Path.parent(__file__) / "icons" / "parcelle.png"
         self.infracommune.addTab(self.parcelle, QIcon(icon), "")
         self.adresse = QWidget()
         self.adresse.setMinimumSize(QSize(294, 0))
@@ -182,7 +182,7 @@ class Ui_Dialog:
         self.adrout.setText("")
         self.adrout.setObjectName("adrout")
 
-        icon = Path.parent(__file__) / "adresse.png"
+        icon = Path.parent(__file__) / "icons" / "adresse.png"
         self.infracommune.addTab(self.adresse, QIcon(icon), "")
         self.gridLayout_2.addWidget(self.infracommune, 3, 1, 1, 4)
 
