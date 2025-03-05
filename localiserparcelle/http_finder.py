@@ -53,7 +53,7 @@ class HttpFinder(QObject):
     message = pyqtSignal(str, Qgis.MessageLevel)
 
     def __init__(self, parent: QWidget = None):
-        super().__init__(self, parent)
+        super().__init__(parent)
         self.asynchonous = False
         self.reply = None
         self.data = None
@@ -288,7 +288,7 @@ class AdresseBanFinder(HttpFinder):
         codecity=None,
         parent: QWidget = None,
     ):
-        super().__init__(self, parent)
+        super().__init__(parent)
         self.search = search
         self.limit = limit
         self.params = {"q": self.search, "limit": self.limit}
@@ -333,7 +333,7 @@ class CartelieFinder(HttpFinder):
     )
 
     def __init__(self, parent: QWidget = None):  # , indexListe, code=None, parent=None)
-        super().__init__(self, parent)
+        super().__init__(parent)
         self.params = {"niveauBase": "0", "niveau": "0", "projection": "EPSG_2154"}
 
         ## Dossier où enregistrer les datas web en cache pour limiter les requetes
@@ -341,11 +341,11 @@ class CartelieFinder(HttpFinder):
         self.cheminCache = None
         iniFic = QSettings().fileName()
         if QFile.exists(iniFic):  # Si la config QGIS est stockee dans QGIS/QGIS3.ini
-            iniDir = Path.parent(iniFic)
+            iniDir = str(Path(iniFic).parent)
             if QDir(f"{iniDir}{os.sep}{dossierCache}").exists() or QDir(iniDir).mkdir(
                 dossierCache,
             ):
-                self.cheminCache = Path.resolve(f"{iniDir}{os.sep}{dossierCache}")
+                self.cheminCache = str(Path(f"{iniDir}{os.sep}{dossierCache}").resolve())
 
     def appel(
         self, indexListe, code=None, parent=None, forcerMAJ=False

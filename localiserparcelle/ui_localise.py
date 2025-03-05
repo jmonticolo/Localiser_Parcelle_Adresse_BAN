@@ -55,7 +55,7 @@ class Ui_Dialog:
     def setupUi(self):
         self.setObjectName("Dialog")
         self.resize(380, 380)
-        icon = Path.parent(__file__) / "icons" / "icone.png"
+        icon = str(Path(__file__).parent / "icons" / "icone.png")
         self.setWindowIcon(QIcon(icon))
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -160,7 +160,7 @@ class Ui_Dialog:
         self.lParcelle.setObjectName("lParcelle")
         # self.lParcelle.addItem("")
 
-        icon = Path.parent(__file__) / "icons" / "parcelle.png"
+        icon = str(Path(__file__).parent / "icons" / "parcelle.png")
         self.infracommune.addTab(self.parcelle, QIcon(icon), "")
         self.adresse = QWidget()
         self.adresse.setMinimumSize(QSize(294, 0))
@@ -182,7 +182,7 @@ class Ui_Dialog:
         self.adrout.setText("")
         self.adrout.setObjectName("adrout")
 
-        icon = Path.parent(__file__) / "icons" / "adresse.png"
+        icon = str(Path(__file__).parent / "icons" / "adresse.png")
         self.infracommune.addTab(self.adresse, QIcon(icon), "")
         self.gridLayout_2.addWidget(self.infracommune, 3, 1, 1, 4)
 
@@ -318,13 +318,16 @@ class Ui_Dialog:
     def retranslateUi(self):
         self.setWindowTitle(
             _translate(
-                "Dialog", "Localiser une commune, une parcelle ou une adresse", None,
+                "Dialog",
+                "Localiser une commune, une parcelle ou une adresse",
+                None,
             ),
         )
         self.bInfo.setText(_translate("Dialog", "à propos", None))
         self.lCommune.setItemText(0, _translate("Dialog", "-- COMMUNE --", None))
         self.lDepartement.setItemText(
-            0, _translate("Dialog", "-- DEPARTEMENT --", None)
+            0,
+            _translate("Dialog", "-- DEPARTEMENT --", None),
         )
         self.lRegion.setItemText(0, _translate("Dialog", "-- REGION --", None))
         self.lSection.setItemText(0, _translate("Dialog", "-- SECTION --", None))
@@ -342,13 +345,13 @@ class Ui_Dialog:
         self.bErase.setText(_translate("Dialog", "Effacer le marqueur", None))
         self.bQuit.setText(_translate("Dialog", "Fermer", None))
         self.optionGroupBox.setTitle(
-            f"{_translate("Dialog", "Options du marqueur", None)} :",
+            f'{_translate("Dialog", "Options du marqueur", None)} :',
         )
         self.lblScale.setText(
-            f"{_translate("Dialog", "Zoom élément trouvé  (m)", None)} :",
+            f'{_translate("Dialog", "Zoom élément trouvé  (m)", None)} :',
         )
         self.lblColorOpacity.setText(
-            f"{_translate("Dialog", "Couleur et opacité", None)} :",
+            f'{_translate("Dialog", "Couleur et opacité", None)} :',
         )
         self.dynaMarker.setText(_translate("Dialog", "Marqueur animé", None))
 

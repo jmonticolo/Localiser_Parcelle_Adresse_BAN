@@ -6,7 +6,7 @@ from .ui_localise import Ui_Dialog
 
 class ui_control(QDialog, Ui_Dialog):
     def __init__(self, parent: QWidget, fl):
-        super().__init__(self, parent, fl)
+        QDialog.__init__(self, parent, fl)
         self.setupUi()
 
     def commune_adresse_disable(self, output):

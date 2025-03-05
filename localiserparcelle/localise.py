@@ -30,7 +30,7 @@ from qgis.utils import iface, pluginMetadata
 from .ban_locator_filter import BanLocatorFilter
 from .ui_control import ui_control
 
-cePlugin = Path.name(Path.parent(__file__))
+cePlugin = Path(__file__).parent.name
 PluginVersion = pluginMetadata(
     cePlugin,
     "version",
@@ -43,13 +43,13 @@ class plugin(QObject):
         QObject.__init__(self)
         self.iface = iface
         # translation environment
-        self.plugin_dir = Path.parent(__file__)
+        self.plugin_dir = Path(__file__).parent
         # locale = QSettings().value("locale/userLocale")[0:2]
         locale = "fr"
         localePath = Path(self.plugin_dir) / "i18n" / f"localiseparcelle_{locale}.qm"
         if Path.exists(localePath):
             self.translator = QTranslator()
-            self.translator.load(localePath)
+            self.translator.load(str(localePath))
             QCoreApplication.installTranslator(self.translator)
 
         # locator
@@ -61,7 +61,7 @@ class plugin(QObject):
         self.manager = QgsNetworkAccessManager.instance()
         self.tmpGeometry = []
         self.lstListes = []  # Les listes déroulantes de l'écran : region, dep, comm...
-        icon = Path.parent(__file__) / "icons" / "icone.png"
+        icon = str(Path(__file__).parent / "icons" / "icone.png")
         win = iface.mainWindow()
         self.pluginMenu = iface.pluginMenu().addMenu(
             QIcon(icon), "&Localiser Parcelle ou Adresse (Ban)"
@@ -77,7 +77,7 @@ class plugin(QObject):
         self.pluginMenu.addAction(self.action)
 
         self.actionAide = QAction(
-            QIcon(Path.parent(__file__) / "icons" / "help.png"),
+            QIcon(str(Path(__file__).parent / "icons" / "help.png")),
             f"A propos du plugin (version {PluginVersion})",
             win,
         )
@@ -122,7 +122,10 @@ class plugin(QObject):
         )
         # Il faut positionner le dialog MANUELLEMENT, sinon Qt va le repositionner automatiquement à chaque hide -> show :
         self.dlg.setGeometry(
-            win.geometry().x() + 50, win.geometry().y() + 50, 200, 200,
+            win.geometry().x() + 50,
+            win.geometry().y() + 50,
+            200,
+            200,
         )  # """
 
         # fermeture de la fenetre du plugin on deroute sur une fonction interne
@@ -199,7 +202,8 @@ class plugin(QObject):
         self.dlg.lRegion.setCurrentIndex(region)
 
         dep = s.value(
-            f"{self.settings}departement", "",
+            f"{self.settings}departement",
+            "",
         )  # Il faut le faire avant getListDepartements()
         self.getListDepartements()
         if dep == "":
@@ -301,10 +305,12 @@ class plugin(QObject):
         #############################################
         s = QSettings()
         networkTimeout = s.value(
-            "Qgis/networkAndProxy/networkTimeout", "60000",
+            "Qgis/networkAndProxy/networkTimeout",
+            "60000",
         )  # Sauver le param Timeout
         s.setValue(
-            "Qgis/networkAndProxy/networkTimeout", "20000",
+            "Qgis/networkAndProxy/networkTimeout",
+            "20000",
         )  #  Imposer un délai de 20 secondes
 
         if indexListe > 0:
@@ -317,7 +323,8 @@ class plugin(QObject):
             result = self.cartelie.appel(indexListe, forcerMAJ=MAJ)
 
         s.setValue(
-            "Qgis/networkAndProxy/networkTimeout", networkTimeout,
+            "Qgis/networkAndProxy/networkTimeout",
+            networkTimeout,
         )  # Retablir le parametre d'origine
 
         if not result:
@@ -472,7 +479,8 @@ class plugin(QObject):
     def setMarker(self):
         self.marqueurDyna = self.dlg.dynaMarker.isChecked()
         QSettings().setValue(
-            f"{self.settings}marker", self.marqueurDyna,
+            f"{self.settings}marker",
+            self.marqueurDyna,
         )  # Memoriser le parametre "marqueurDyna"
         if self.marker:
             mc = self.iface.mapCanvas()
@@ -498,7 +506,8 @@ class plugin(QObject):
     def setScale(self):
         self.scaleZoom = self.dlg.scale.value()
         QSettings().setValue(
-            f"{self.settings}zoom", self.scaleZoom,
+            f"{self.settings}zoom",
+            self.scaleZoom,
         )  # Memoriser le parametre "Zoom"
 
         if self.marker:
@@ -539,7 +548,10 @@ class plugin(QObject):
             dynaLocationMarker(mc, rect.center().x(), rect.center().y(), self.color)
             if self.marqueurDyna
             else basicLocationMarker(
-                mc, rect.center().x(), rect.center().y(), self.color,
+                mc,
+                rect.center().x(),
+                rect.center().y(),
+                self.color,
             )
         )
         # self.marker = dynaLocationMarker(mc, rect.center().x(), rect.center().y(), self.color) if self.dlg.dynaMarker.isChecked() else basicLocationMarker(mc, rect.center().x(), rect.center().y(), self.color)
@@ -552,7 +564,8 @@ class plugin(QObject):
         self.dlg.adrin.set_codecity(c)
 
     def getAbout(self):
-        icon = Path.parent(__file__) / "icons" / "icone.png"
+        icon = str(Path(__file__).parent / "icons" / "icone.png")
+        icon = icon.replace("\\", "/")
         html = (
             "Ce plugin exploite (par le protocole <b>HTTP</b>):<br>"
             "<ol><li>le service Web du Ministère de la Transition Ecologique et Solidaire"
@@ -564,7 +577,7 @@ class plugin(QObject):
             " un accès internet, en utilisant la configuration réseau de qgis"
             " pour le protocole HTTP et le système de projection courant du projet"
             " pour toute transformation des coordonnées.<br><br>"
-            f'<img src=\'{icon.replace("\\", "/")}\'> Version {PluginVersion}'
+            f"<img src='{icon}'> Version {PluginVersion}"
         )
         QMessageBox.information(self.dlg, "A propos", html)
 
