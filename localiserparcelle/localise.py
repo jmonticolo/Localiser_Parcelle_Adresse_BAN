@@ -424,10 +424,7 @@ class plugin(QObject):
             QMessageBox.information(
                 self.iface.mainWindow(),
                 "Zoom impossible",
-                unicode(
-                    "Pas si vite! Vous n'avez même pas choisi de région où aller !",
-                    "UTF-8",
-                ),
+                "Pas si vite! Vous n'avez même pas choisi de région où aller !",
             )
         else:
             index_lActuelle = self.lstListes[indexListe].currentIndex()  # -1
