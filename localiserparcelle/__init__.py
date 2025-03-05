@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
 """
 /***************************************************************************
         Aller sur une parcelle - Zoomer de la région à la parcelle
@@ -25,4 +25,5 @@
 
 def classFactory(iface):
     from .localise import plugin
+
     return plugin(iface)

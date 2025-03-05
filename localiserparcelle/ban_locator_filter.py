@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # Discovery Plugin
 #
 # Copyright (C) 2017 Lutra Consulting
@@ -10,8 +8,13 @@
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
 
-
-from qgis.core import QgsLocatorFilter, QgsLocatorResult, QgsPointXY, QgsCoordinateTransform, QgsMessageLog
+from qgis.core import (
+    QgsCoordinateTransform,
+    QgsLocatorFilter,
+    QgsLocatorResult,
+    QgsMessageLog,
+    QgsPointXY,
+)
 
 from .http_finder import AdresseBanFinder
 
@@ -38,11 +41,7 @@ class BanLocatorFilter(QgsLocatorFilter):
         if len(text) < 3:
             return
 
-        adresse_ban_finder = AdresseBanFinder(
-            search=text,
-            codecity=None,
-            parent=None
-        )
+        adresse_ban_finder = AdresseBanFinder(search=text, codecity=None, parent=None)
 
         if feedback.isCanceled():
             return
@@ -53,18 +52,22 @@ class BanLocatorFilter(QgsLocatorFilter):
             res = QgsLocatorResult(self, adresse, (score, type_info, x, y))
             res.score = score
             QgsMessageLog.logMessage(
-                "adresse => {} score => {} type_info ==> {}".format(adresse, score, type_info))
+                "adresse => {} score => {} type_info ==> {}".format(
+                    adresse, score, type_info
+                )
+            )
             res.group = type_info
             self.resultFetched.emit(res)
 
     def triggerResult(self, result):
-        try: #new PyQt
+        try:  # new PyQt
             score, type_info, x, y = result.getUserData()
         except:
             score, type_info, x, y = result.userData
         transformer = self.plugin.getTransformer(4326)
-        point = transformer.transform(QgsPointXY(
-            x, y), QgsCoordinateTransform.ForwardTransform)
+        point = transformer.transform(
+            QgsPointXY(x, y), QgsCoordinateTransform.ForwardTransform
+        )
         x, y = point[0], point[1]
         self.plugin.zoomTo(x, y, x, y)
 
