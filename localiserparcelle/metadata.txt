@@ -1,6 +1,6 @@
 [general]
 name=Localiser Parcelle Adresse (BAN)
-version=3.6.0
+version=3.6.1
 qgisMinimumVersion=3.0
 
 description= Localiser Parcelle Adresse (BAN) permet de localiser des lieux : communes, parcelles cadastrales ou adresse
@@ -8,6 +8,7 @@ description= Localiser Parcelle Adresse (BAN) permet de localiser des lieux : co
 about= Cette extension exploite (par le protocole <b>http</b>):<br><ol><li>le service Web du Ministère de la Transition Ecologique et Solidaire de géolocalisation avec plusieurs échelles administratives (Région, Département, Commune, Section, Parcelle) ;</li><li>le service web de géolocalisation à l'adresse Etalab.gouv.fr-BAN.</li></ol>Ces deux web services fonctionnent depuis des postes de travail ayant un accès internet, en utilisant la configuration réseau de qgis pour le protocole HTTP et le système de projection courant du projet pour toute transformation des coordonnées.<br><br>
 
 changelog=
+ 3.6.1 : Correction d'une erreur lors d'un géocodage de deux caractères + un espace
  3.6.0 : Ajoute une 2e URL pour la localisation cadastrale : 1: Georef ou 2: Cartelie
  3.5.8 : BanLocatorFilter correction bug userData (pyqt api break)
  3.5.7 : corrige un soucis de reglage du timeout reseau
