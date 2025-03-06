@@ -35,7 +35,7 @@ changelog=
  2.2 : retrait accentuation metadata.txt pour fonctionner en 2.16 et encodage ANSI
  2.1 : modif. pour marcher avec des projections non EPSG et le WGS84
 
-icon=icone.png
+icon=icons/icone.png
 tags= PARCELLE, WEB SERVICES, CADASTRE, BAN
 
 author=Mathieu RAJERISON, Philippe DESBOEUFS, Frederic LASSERON, Christophe MASSE, Jean-Daniel LOMENEDE
